@@ -5,7 +5,7 @@ int main()
 {
 
     int age;
-    cout << " 나이를 입력하시오!!: ";
+    cout << " 나이를 입력해라: ";
     cin >> age;
 
     if (age <= 12)
