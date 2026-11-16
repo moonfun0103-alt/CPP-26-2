@@ -14,7 +14,7 @@ class Camera{
         }
 };
 
-Camera* Camera::instance = nullptr; // = 0도 가능함
+Camera* Camera::instance = nullptr; 
 
 Camera* Camera::GetInstance(){
     if (!instance) {
