@@ -5,15 +5,17 @@ from collections import defaultdict
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+
 def exercise_for(src):
     parts = src.parts
     if parts[0] == "project" and len(parts) >= 3:
-        return Path(*parts[:2]) # project/week13_mudgame/
+        return Path(*parts[:2])           # project/week13_mudgame/
     if parts[0] in {"practice", "challenge"}:
         if len(parts) >= 4:
-            return Path(*parts[:3]) # practice/week13/actions_test/
-        return src # practice/week13/animal_virtual.cpp
-    return src.parent # 그 밖의 위치는 같은 폴더끼리 검사
+            return Path(*parts[:3])       # practice/week13/actions_test/
+        return src                        # practice/week13/animal_virtual.cpp
+    return src.parent                     # 그 밖의 위치는 같은 폴더끼리 검사
+
 
 os.chdir(Path(__file__).resolve().parents[1])
 tracked = subprocess.check_output(["git", "ls-files", "-z"]).split(b"\0")
@@ -38,8 +40,8 @@ with TemporaryDirectory() as tmp:
             obj.parent.mkdir(parents=True, exist_ok=True)
             print(f"[compile] {src}", flush=True)
             cmd = [
-            "g++", "-std=c++17", "-Wall", "-Wextra", "-x", "c++",
-            "-I", base, "-I", base / "include", "-c", src.resolve(), "-o", obj,
+                "g++", "-std=c++17", "-Wall", "-Wextra", "-x", "c++",
+                "-I", base, "-I", base / "include", "-c", src.resolve(), "-o", obj,
             ]
             if subprocess.run(cmd).returncode:
                 failures.append(f"COMPILE FAILED: {src}")
