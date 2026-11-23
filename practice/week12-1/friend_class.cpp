@@ -1,3 +1,7 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
 class A {
 public:
     friend class B; // B는 A의 프렌드가 된다.

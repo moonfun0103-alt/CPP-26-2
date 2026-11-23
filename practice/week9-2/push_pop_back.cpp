@@ -4,6 +4,7 @@ using namespace std;
 
 int main(void)
 {
+    // 1. push_back 예제
     vector<int> v1; // 사이즈를 안줘도 넣을 수 있음!
 
     v1.push_back(10);
@@ -17,14 +18,8 @@ int main(void)
         cout << e << " ";
     }
     cout << endl;
-    return 0;
-}
 
-#include <vector>
-#include <iostream>
-using namespace std;
-
-int main(void) {
+    // 2. pop_back 예제
     vector<int> v;
     for (int i = 0; i < 10; ++i) {
         v.push_back(i);
@@ -42,5 +37,7 @@ int main(void) {
         cout << v.back() << " ";
         v.pop_back();
     }
-    cout << endl; return 0;
+    cout << endl;
+
+    return 0;
 }
