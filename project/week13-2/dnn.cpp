@@ -28,7 +28,7 @@ void printVector(const vector<double>& values)
 //
 // ============================================================
 double dotProduct(const vector<double>& a, const vector<double>& b) {
-    // [TODO] 두 벡터의 크기가 다르면 내적을 구할 수 없으므로 에러 메시지 출력
+    // 두 벡터의 크기가 다르면 내적을 구할 수 없으므로 에러 메시지 출력
     if (a.size() != b.size())
     {
         cout << "[Error] dotProduct: 두 벡터의 크기가 다릅니다. ("
@@ -36,7 +36,7 @@ double dotProduct(const vector<double>& a, const vector<double>& b) {
         return 0.0;
     }
 
-    // [TODO] 같은 위치의 원소끼리 곱해서 모두 더한다
+    // 같은 위치의 원소끼리 곱해서 모두 더한다
     double sum = 0.0;
     for (size_t i = 0; i < a.size(); i++)
     {
@@ -86,7 +86,7 @@ public:
         vector<double> output;
 
         // 출력 뉴런 개수만큼 반복
-        // [TODO] 각 뉴런마다 dotProduct(weight, input) + bias 계산 후 저장
+        // 각 뉴런마다 dotProduct(weight, input) + bias 계산 후 저장
         for (size_t i = 0; i < weights.size(); i++)
         {
             double value = dotProduct(weights[i], input) + bias[i];
@@ -109,7 +109,7 @@ public:
     vector<double> forward(const vector<double>& input) override {
         vector<double> output;
 
-        // [TODO] 음수(0 이하)는 0으로, 양수는 그대로 통과
+        // 음수(0 이하)는 0으로, 양수는 그대로 통과
         for (double value : input)
         {
             if (value > 0)
@@ -150,20 +150,97 @@ public:
     }
 };
 
-int main()
+// 7. Step Function Layer (Heaviside)
+// x >= 0 → 1,  x < 0 → 0
+class Step : public Layer {
+public:
+    vector<double> forward(const vector<double>& input) override {
+        vector<double> output;
+
+        // 0 이상이면 1, 음수이면 0
+        for (double value : input)
+        {
+            if (value >= 0)
+            {
+                output.push_back(1.0);
+            }
+            else
+            {
+                output.push_back(0.0);
+            }
+        }
+
+        return output;
+    }
+
+    string getName() const override {
+        return "Step";
+    }
+};
+
+// 8. 기능별 테스트 함수
+// 각 함수/Layer가 요구사항대로 동작하는지 하나씩 확인한다
+void testFunctions()
 {
-    cout << "==============================" << endl;
-    cout << "       Simple C++ DNN" << endl;
-    cout << "==============================" << endl;
-
-    // 1. 입력 데이터
-    vector<double> input = {1.0, 0.5};
-
     cout << endl;
-    cout << "Input" << endl;
-    printVector(input);
+    cout << "================================" << endl;
+    cout << "        Function Test" << endl;
+    cout << "================================" << endl;
 
-    // 2. 첫 번째 Dense Layer
+    vector<double> x = {1.0, 0.5};
+
+    // (1) dotProduct : expected 0.6
+    vector<double> w = {0.8, -0.4};
+    cout << endl;
+    cout << "[Test 1] dotProduct" << endl;
+    cout << dotProduct(x, w) << endl;
+
+    // (2) dotProduct : 두 벡터의 크기가 다른 경우 → 에러 메시지
+    vector<double> w3 = {0.8, -0.4, 0.1};
+    cout << endl;
+    cout << "[Test 2] dotProduct (size mismatch)" << endl;
+    cout << dotProduct(x, w3) << endl;
+
+    // (3) Dense : expected [ 0.7 0.55 -0.1 ]
+    vector<vector<double>> testWeights =
+    {
+        { 0.8, -0.4 },
+        { 0.3,  0.9 },
+        {-0.5,  0.2 }
+    };
+    vector<double> testBias = {0.1, -0.2, 0.3};
+
+    Dense dense(testWeights, testBias);
+    vector<double> denseOutput = dense.forward(x);
+    cout << endl;
+    cout << "[Test 3] Dense" << endl;
+    printVector(denseOutput);
+
+    // (4) ReLU : 음수는 0, 양수는 그대로
+    ReLU relu;
+    cout << endl;
+    cout << "[Test 4] ReLU" << endl;
+    printVector(relu.forward(denseOutput));
+
+    // (5) Sigmoid : 0 ~ 1 사이 값으로 변환
+    Sigmoid sigmoid;
+    cout << endl;
+    cout << "[Test 5] Sigmoid" << endl;
+    printVector(sigmoid.forward(denseOutput));
+
+    // (6) Step : 0 이상이면 1, 아니면 0
+    Step step;
+    cout << endl;
+    cout << "[Test 6] Step" << endl;
+    printVector(step.forward(denseOutput));
+}
+
+// 9. 네트워크 실행 함수
+// Input(2) → Dense(2 → 3) → ReLU 또는 Step → Dense(3 → 1) → Sigmoid
+// useStep = false → ReLU 사용,  useStep = true → Step 사용
+void runNetwork(const vector<double>& input, bool useStep)
+{
+    // 첫 번째 Dense Layer
     // Input Node  : 2개, Output Node : 3개,  따라서 Weight Matrix는 3 x 2
     vector<vector<double>> weights1 =
     {
@@ -173,40 +250,39 @@ int main()
     };
     vector<double> bias1 = {0.1, -0.1, 0.05};
 
-    // 3. 두 번째 Dense Layer
+    // 두 번째 Dense Layer
     // Input Node  : 3개, Output Node : 1개, 따라서 Weight Matrix는 1 x 3
     vector<vector<double>> weights2 =
     {
         { 0.6, -0.4, 0.9 }
     };
-
     vector<double> bias2 = {-0.2};
 
-    // 4. Neural Network 생성
-    // Input(2) → Dense(2 → 3) → ReLU → Dense(3 → 1) → Sigmoid
+    // Neural Network 생성
     vector<Layer*> network;
 
-    // 첫 번째 Dense Layer
     network.push_back(new Dense(weights1, bias1));
 
-    // ReLU Layer
-    network.push_back(new ReLU());
+    // 활성화 함수 선택 (ReLU 또는 Step)
+    if (useStep)
+    {
+        network.push_back(new Step());
+    }
+    else
+    {
+        network.push_back(new ReLU());
+    }
 
-    // 두 번째 Dense Layer
     network.push_back(new Dense(weights2, bias2));
-
-    // Sigmoid Layer
     network.push_back(new Sigmoid());
 
-    // 5. Forward Propagation
+    cout << "Input" << endl;
+    printVector(input);
+
+    // Forward Propagation
     vector<double> output = input;
 
-    cout << endl;
-    cout << "================================" << endl;
-    cout << "     Forward Propagation" << endl;
-    cout << "================================" << endl;
-
-    // Layer* 하나를 이용하여 서로 다른 객체(Dense/ReLU/Sigmoid)의 forward()를 호출한다.
+    // Layer* 하나를 이용하여 서로 다른 객체의 forward()를 호출한다.
     // <다형성>
     for (Layer* layer : network)
     {
@@ -216,19 +292,14 @@ int main()
         printVector(output);
     }
 
-    // 6. 최종 출력
+    // 최종 출력
     cout << endl;
-    cout << "================================" << endl;
-    cout << "          Final Result" << endl;
-    cout << "================================" << endl;
-
     cout << "Output : ";
     printVector(output);
 
     // Sigmoid 결과값을 이용하여 간단하게 이진 분류
     // 0.5 이상 → Class 1
     // 0.5 미만 → Class 0
-
     if (output[0] >= 0.5)
     {
         cout << "Prediction : Class 1" << endl;
@@ -238,11 +309,51 @@ int main()
         cout << "Prediction : Class 0" << endl;
     }
 
-    // 7. 동적 객체 메모리 해제
+    // 동적 객체 메모리 해제
     for (Layer* layer : network)
     {
         delete layer;
     }
+}
+
+int main()
+{
+    cout << "==============================" << endl;
+    cout << "       Simple C++ DNN" << endl;
+    cout << "==============================" << endl;
+
+    // 1. 기능별 테스트
+    testFunctions();
+
+    // 2. 입력 데이터 (예측 결과가 서로 다른 2개의 케이스)
+    vector<double> input1 = {1.0, 0.5};
+    vector<double> input2 = {0.0, 1.0};
+
+    // 3. ReLU를 사용한 네트워크
+    cout << endl;
+    cout << "================================" << endl;
+    cout << "   Case 1 : Input 1 + ReLU" << endl;
+    cout << "================================" << endl;
+    runNetwork(input1, false);
+
+    cout << endl;
+    cout << "================================" << endl;
+    cout << "   Case 2 : Input 2 + ReLU" << endl;
+    cout << "================================" << endl;
+    runNetwork(input2, false);
+
+    // 4. ReLU를 Step(Heaviside)으로 바꾼 네트워크
+    cout << endl;
+    cout << "================================" << endl;
+    cout << "   Case 3 : Input 1 + Step" << endl;
+    cout << "================================" << endl;
+    runNetwork(input1, true);
+
+    cout << endl;
+    cout << "================================" << endl;
+    cout << "   Case 4 : Input 2 + Step" << endl;
+    cout << "================================" << endl;
+    runNetwork(input2, true);
 
     return 0;
 }
